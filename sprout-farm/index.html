@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>嫩芽農場</title>
+<style>
+  :root{
+    --bg:#FBF3E1;
+    --bg-soft:#F3E7CB;
+    --card:#FFFDF6;
+    --soil:#6B4226;
+    --soil-dark:#4A2E1A;
+    --soil-tilled:#8A5A34;
+    --leaf:#4C7A3D;
+    --leaf-light:#7FB069;
+    --sun:#F2B705;
+    --flower:#C9678A;
+    --flower-soil:#7A5A4A;
+    --fruit:#E0672F;
+    --fruit-soil:#6B4130;
+    --ink:#2E2A1F;
+    --ink-soft:#6B5E48;
+    --line:#E4D5AE;
+    --danger:#B84B3E;
+    --shadow: 0 3px 0 rgba(46,42,31,0.12);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#231A12; --bg-soft:#2E2317; --card:#2B2118;
+      --soil:#5C3B22; --soil-dark:#3A2413; --soil-tilled:#7A4F2C;
+      --leaf:#6FA05A; --leaf-light:#8FC178; --sun:#F2B705;
+      --flower:#E58AAB; --flower-soil:#5A4438; --fruit:#F08A52; --fruit-soil:#5A3A2A;
+      --ink:#F3EAD6; --ink-soft:#C9B893; --line:#4A3A26;
+      --shadow: 0 3px 0 rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#231A12; --bg-soft:#2E2317; --card:#2B2118;
+    --soil:#5C3B22; --soil-dark:#3A2413; --soil-tilled:#7A4F2C;
+    --leaf:#6FA05A; --leaf-light:#8FC178; --sun:#F2B705;
+    --flower:#E58AAB; --flower-soil:#5A4438; --fruit:#F08A52; --fruit-soil:#5A3A2A;
+    --ink:#F3EAD6; --ink-soft:#C9B893; --line:#4A3A26;
+    --shadow: 0 3px 0 rgba(0,0,0,0.35);
+  }
+
+  * { box-sizing:border-box; }
+  html, body{ margin:0; }
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+    padding-inline:16px;
+    padding-block:20px 40px;
+    display:flex;
+    justify-content:center;
+  }
+  .wrap{ width:100%; max-width:760px; }
+
+  h1{
+    font-family:'ZCOOL KuaiLe','Noto Sans TC',sans-serif;
+    font-weight:400;
+    font-size:clamp(26px,7vw,36px);
+    color:var(--leaf);
+    margin:0;
+    text-wrap:balance;
+    letter-spacing:1px;
+  }
+  .sub{ color:var(--ink-soft); font-size:12.5px; margin-top:2px; }
+
+  .topbar{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom:14px;
+  }
+  .stats{ display:flex; gap:8px; flex-wrap:wrap; }
+  .pill{
+    background:var(--card);
+    border:2px solid var(--line);
+    border-radius:999px;
+    padding:8px 14px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-weight:700;
+    font-variant-numeric:tabular-nums;
+    box-shadow:var(--shadow);
+    font-size:14.5px;
+    cursor:default;
+  }
+  .pill .ic{ font-size:16px; }
+  .pill.coin{ color:#8A6100; }
+  :root[data-theme="dark"] .pill.coin{ color:var(--sun); }
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .pill.coin{ color:var(--sun);} }
+
+  .pill.toggle{ cursor:pointer; border-color:var(--line); transition:border-color .15s, background .15s; user-select:none; }
+  .pill.toggle.on{ border-color:var(--leaf); background:color-mix(in srgb, var(--leaf) 16%, var(--card)); color:var(--leaf); }
+
+  .progress-line{ font-size:11.5px; color:var(--ink-soft); margin:-6px 0 14px; }
+
+  .toast{
+    position:fixed; left:50%; top:16px;
+    transform:translateX(-50%) translateY(-140%);
+    background:var(--ink); color:var(--bg);
+    padding:9px 18px; border-radius:999px; font-weight:700; font-size:14px;
+    box-shadow:0 6px 16px rgba(0,0,0,0.25);
+    transition:transform .35s cubic-bezier(.2,.9,.3,1.3);
+    z-index:50; pointer-events:none; white-space:nowrap; max-width:88vw; overflow:hidden; text-overflow:ellipsis;
+  }
+  .toast.show{ transform:translateX(-50%) translateY(0); }
+
+  .tabbar{
+    display:flex; gap:8px; overflow-x:auto; padding-bottom:2px; margin-bottom:14px;
+  }
+  .tabbtn{
+    flex:0 0 auto;
+    display:flex; align-items:center; gap:6px;
+    padding:9px 14px;
+    border-radius:999px;
+    border:2px solid var(--line);
+    background:var(--card);
+    color:var(--ink-soft);
+    font-weight:700;
+    font-size:13.5px;
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .tabbtn.active{ background:var(--leaf); border-color:var(--leaf); color:#fff; }
+  .tabbtn.locked{ opacity:.55; }
+  .tabbtn .lockic{ font-size:12px; }
+
+  section{
+    background:var(--card);
+    border:2px solid var(--line);
+    border-radius:20px;
+    padding:16px;
+    margin-bottom:16px;
+    box-shadow:var(--shadow);
+  }
+  section h2{
+    font-family:'ZCOOL KuaiLe','Noto Sans TC',sans-serif;
+    font-weight:400;
+    font-size:18px;
+    margin:0 0 12px;
+    color:var(--ink);
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+
+  .shop-row{ display:flex; gap:10px; overflow-x:auto; padding:2px; margin-bottom:14px; }
+  .seed-card{
+    flex:0 0 auto; width:100px;
+    border:2px solid var(--line);
+    background:var(--bg-soft);
+    border-radius:14px;
+    padding:10px 8px;
+    text-align:center;
+    cursor:pointer;
+    transition:transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .seed-card:hover{ transform:translateY(-2px); }
+  .seed-card.selected{
+    border-color:var(--accent, var(--leaf));
+    box-shadow:0 0 0 3px color-mix(in srgb, var(--accent, var(--leaf)) 25%, transparent);
+    background:color-mix(in srgb, var(--accent, var(--leaf)) 12%, var(--bg-soft));
+  }
+  .seed-card .emoji{ font-size:28px; line-height:1; }
+  .seed-card .name{ font-weight:700; font-size:12.5px; margin-top:4px; }
+  .seed-card .meta{ font-size:10.5px; color:var(--ink-soft); margin-top:3px; font-variant-numeric:tabular-nums; }
+  .seed-card .cost{ font-size:11.5px; font-weight:700; color:#8A6100; margin-top:4px; font-variant-numeric:tabular-nums; }
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .seed-card .cost{ color:var(--sun);} }
+  :root[data-theme="dark"] .seed-card .cost{ color:var(--sun); }
+  .seed-card.locked{ opacity:.45; cursor:not-allowed; }
+  .seed-card.locked:hover{ transform:none; }
+
+  .farm-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; }
+  .plot{
+    position:relative; aspect-ratio:1; border-radius:16px;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; overflow:hidden; -webkit-tap-highlight-color:transparent;
+    border:2px solid var(--soil-dark);
+    background:var(--soil);
+  }
+  .plot.land-flower{ background:var(--flower-soil); border-color:color-mix(in srgb, var(--flower-soil) 70%, black); }
+  .plot.land-fruit{ background:var(--fruit-soil); border-color:color-mix(in srgb, var(--fruit-soil) 70%, black); }
+  .plot::before{
+    content:""; position:absolute; inset:0;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(0,0,0,0.12) 0, transparent 40%),
+      radial-gradient(circle at 75% 70%, rgba(0,0,0,0.12) 0, transparent 45%);
+  }
+  .plot .emoji{ font-size:32px; position:relative; z-index:1; filter:drop-shadow(0 2px 1px rgba(0,0,0,0.25)); transition:transform .2s ease; }
+  .plot.ready .emoji{ animation:bob 1s ease-in-out infinite; }
+  .plot.ready{ box-shadow:0 0 0 3px var(--sun) inset, 0 0 14px 2px color-mix(in srgb, var(--sun) 60%, transparent); }
+  @keyframes bob{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-4px);} }
+  .plot:active .emoji{ transform:scale(.88); }
+  .fert-badge{ position:absolute; top:4px; right:4px; font-size:12px; z-index:2; filter:drop-shadow(0 1px 1px rgba(0,0,0,.4)); }
+
+  .ring{
+    position:absolute; bottom:5px; left:50%; transform:translateX(-50%);
+    width:70%; height:5px; background:rgba(0,0,0,0.28); border-radius:999px; overflow:hidden; z-index:1;
+  }
+  .ring i{ display:block; height:100%; background:var(--leaf-light); width:0%; }
+  .empty-hint{ font-size:22px; opacity:.35; position:relative; z-index:1; }
+
+  .expand-btn{
+    margin-top:12px; width:100%;
+    border:2px dashed var(--line);
+    background:transparent;
+    border-radius:14px;
+    padding:12px;
+    font-weight:700;
+    font-size:13px;
+    color:var(--ink-soft);
+    cursor:pointer;
+    font-variant-numeric:tabular-nums;
+  }
+  .expand-btn:not(:disabled):hover{ border-color:var(--leaf); color:var(--leaf); }
+  .expand-btn:disabled{ opacity:.5; cursor:not-allowed; }
+
+  .lock-panel{ text-align:center; padding:22px 10px; }
+  .lock-panel .big{ font-size:40px; margin-bottom:8px; }
+  .lock-panel p{ color:var(--ink-soft); font-size:13.5px; margin:4px 0 16px; line-height:1.6; }
+  .buy-btn{
+    border:none; border-radius:999px; padding:11px 22px;
+    background:var(--leaf); color:#fff; font-weight:700; font-size:14px;
+    cursor:pointer; font-variant-numeric:tabular-nums;
+  }
+  .buy-btn:disabled{ opacity:.45; cursor:not-allowed; }
+
+  .market-row{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 6px;
+    border-bottom:1px solid var(--line);
+  }
+  .market-row:last-child{ border-bottom:none; }
+  .market-row .emoji{ font-size:24px; width:30px; text-align:center; }
+  .market-row .info{ flex:1; min-width:0; }
+  .market-row .info .nm{ font-weight:700; font-size:13.5px; }
+  .market-row .info .qty{ font-size:11.5px; color:var(--ink-soft); }
+  .market-row .price{
+    font-size:13px; font-weight:700; font-variant-numeric:tabular-nums;
+    display:flex; align-items:center; gap:3px; min-width:74px; justify-content:flex-end;
+  }
+  .market-row .price.up{ color:var(--leaf); }
+  .market-row .price.down{ color:var(--danger); }
+  .market-row .sellbtns{ display:flex; gap:6px; }
+  .sellbtn{
+    border:2px solid var(--line); background:var(--bg-soft);
+    border-radius:10px; padding:6px 9px; font-size:11.5px; font-weight:700;
+    cursor:pointer; color:var(--ink);
+  }
+  .sellbtn:disabled{ opacity:.35; cursor:not-allowed; }
+  .market-empty{ color:var(--ink-soft); font-size:13px; text-align:center; padding:20px 10px; }
+
+  footer{ text-align:center; color:var(--ink-soft); font-size:12px; margin-top:4px; }
+  .reset-btn{ background:none; border:none; color:var(--ink-soft); font-size:12px; text-decoration:underline; cursor:pointer; padding:4px; }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="wrap">
+  <div class="topbar">
+    <div>
+      <h1>嫩芽農場</h1>
+      <div class="sub">播種、施肥、收成，拿去市場賣個好價錢 🌾</div>
+    </div>
+    <div class="stats">
+      <div class="pill coin"><span class="ic">🪙</span><span id="coinVal">0</span></div>
+      <div class="pill"><span class="ic">📦</span><span id="invVal">0</span></div>
+      <div class="pill toggle" id="fertPill"><span class="ic">🧪</span><span id="fertLabel">施肥：關</span></div>
+    </div>
+  </div>
+  <div class="progress-line" id="progressLine"></div>
+
+  <div class="tabbar" id="tabbar"></div>
+
+  <div id="landSection"></div>
+
+  <section id="marketSection" hidden>
+    <h2>🏪 市場交易</h2>
+    <div id="marketList"></div>
+  </section>
+
+  <footer>
+    進度只會保存在這台裝置、這個瀏覽器裡。
+    <button class="reset-btn" id="resetBtn">重新開始一座新農場</button>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var CROPS = [
+    { id:'radish',     land:'veg',    name:'蘿蔔',   grown:'🥕', cost:5,   time:8,   sell:9,   unlock:0 },
+    { id:'corn',       land:'veg',    name:'玉米',   grown:'🌽', cost:12,  time:18,  sell:22,  unlock:0 },
+    { id:'tomato',     land:'veg',    name:'番茄',   grown:'🍅', cost:20,  time:30,  sell:40,  unlock:40 },
+    { id:'pumpkin',    land:'veg',    name:'南瓜',   grown:'🎃', cost:35,  time:50,  sell:75,  unlock:120 },
+    { id:'potato',     land:'veg',    name:'馬鈴薯', grown:'🥔', cost:50,  time:70,  sell:105, unlock:260 },
+    { id:'cabbage',    land:'veg',    name:'高麗菜', grown:'🥬', cost:70,  time:95,  sell:150, unlock:480 },
+    { id:'sunflower',  land:'flower', name:'向日葵', grown:'🌻', cost:60,  time:40,  sell:110, unlock:0 },
+    { id:'rose',       land:'flower', name:'玫瑰',   grown:'🌹', cost:90,  time:60,  sell:170, unlock:250 },
+    { id:'tulip',      land:'flower', name:'鬱金香', grown:'🌷', cost:130, time:85,  sell:240, unlock:600 },
+    { id:'lavender',   land:'flower', name:'薰衣草', grown:'💜', cost:180, time:120, sell:340, unlock:1100 },
+    { id:'strawberry', land:'fruit',  name:'草莓',   grown:'🍓', cost:150, time:90,  sell:280, unlock:0 },
+    { id:'watermelon', land:'fruit',  name:'西瓜',   grown:'🍉', cost:220, time:140, sell:430, unlock:800 },
+    { id:'grape',      land:'fruit',  name:'葡萄',   grown:'🍇', cost:300, time:180, sell:600, unlock:1600 },
+    { id:'pineapple',  land:'fruit',  name:'鳳梨',   grown:'🍍', cost:420, time:240, sell:850, unlock:2800 }
+  ];
+
+  var LAND_DEFS = {
+    veg:    { name:'菜園', icon:'🌾', requireBest:0,   unlockCost:0,   startSize:6, maxSize:10, expandBase:40,  accent:'--leaf' },
+    flower: { name:'花圃', icon:'🌷', requireBest:80,  unlockCost:200, startSize:4, maxSize:8,  expandBase:150, accent:'--flower' },
+    fruit:  { name:'果園', icon:'🍓', requireBest:500, unlockCost:600, startSize:3, maxSize:6,  expandBase:400, accent:'--fruit' }
+  };
+  var LAND_ORDER = ['veg','flower','fruit'];
+
+  var STORAGE_KEY = 'sprout-farm-save-v2';
+  var OLD_KEY = 'sprout-farm-save-v1';
+  var SPROUT_STAGE = 0.45;
+
+  function cropById(id){ for(var i=0;i<CROPS.length;i++) if(CROPS[i].id===id) return CROPS[i]; return null; }
+  function cropsOfLand(landId){ return CROPS.filter(function(c){ return c.land===landId; }); }
+
+  function freshState(){
+    var lands = {};
+    LAND_ORDER.forEach(function(id){
+      var def = LAND_DEFS[id];
+      var unlocked = def.requireBest === 0;
+      lands[id] = {
+        unlocked: unlocked,
+        size: unlocked ? def.startSize : 0,
+        plots: unlocked ? new Array(def.startSize).fill(null) : []
+      };
+    });
+    return {
+      coins: 30,
+      bestEarned: 30,
+      harvested: 0,
+      fertilizerOn: false,
+      inventory: {},
+      market: {},
+      lands: lands
+    };
+  }
+
+  function loadState(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){
+        var parsed = JSON.parse(raw);
+        if(parsed && parsed.lands && parsed.lands.veg) return parsed;
+      }
+      var old = localStorage.getItem(OLD_KEY);
+      if(old){
+        var op = JSON.parse(old);
+        if(op && Array.isArray(op.plots)){
+          var st = freshState();
+          st.coins = op.coins || 30;
+          st.bestEarned = Math.max(30, op.coins || 30);
+          st.harvested = op.harvested || 0;
+          op.plots.forEach(function(p, i){
+            if(p && i < st.lands.veg.plots.length && cropById(p.seed)){
+              st.lands.veg.plots[i] = { crop:p.seed, plantedAt:p.plantedAt, fertilized:false };
+            }
+          });
+          return st;
+        }
+      }
+    }catch(e){}
+    return freshState();
+  }
+
+  var state = loadState();
+  var activeTab = 'veg';
+  var selectedSeed = { veg:'radish', flower:'sunflower', fruit:'strawberry' };
+
+  function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
+
+  var toastEl = document.getElementById('toast');
+  var toastTimer = null;
+  function showToast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, 1500);
+  }
+
+  function fmt(n){ return Math.round(n).toLocaleString('zh-Hant'); }
+
+  function cropUnlocked(crop){ return state.bestEarned >= crop.unlock; }
+
+  function marketMultFor(id){
+    if(state.market[id] === undefined) state.market[id] = 1;
+    return state.market[id];
+  }
+
+  function priceOf(crop){ return Math.max(1, Math.round(crop.sell * marketMultFor(crop.id))); }
+
+  // ---------- rendering ----------
+
+  var coinVal = document.getElementById('coinVal');
+  var invVal = document.getElementById('invVal');
+  var fertPill = document.getElementById('fertPill');
+  var fertLabel = document.getElementById('fertLabel');
+  var progressLine = document.getElementById('progressLine');
+  var tabbar = document.getElementById('tabbar');
+  var landSection = document.getElementById('landSection');
+  var marketSection = document.getElementById('marketSection');
+  var marketList = document.getElementById('marketList');
+
+  function renderTop(){
+    coinVal.textContent = fmt(state.coins);
+    var totalInv = 0;
+    Object.keys(state.inventory).forEach(function(k){ totalInv += state.inventory[k]||0; });
+    invVal.textContent = totalInv;
+    fertPill.classList.toggle('on', state.fertilizerOn);
+    fertLabel.textContent = '施肥：' + (state.fertilizerOn ? '開' : '關');
+
+    var next = null;
+    LAND_ORDER.forEach(function(id){
+      var def = LAND_DEFS[id];
+      if(!state.lands[id].unlocked && def.requireBest > 0 && (next===null || def.requireBest < next.req)){
+        next = { req: def.requireBest, name: def.name };
+      }
+    });
+    CROPS.forEach(function(c){
+      if(!cropUnlocked(c) && (next===null || c.unlock < next.req)){
+        next = { req:c.unlock, name:c.name };
+      }
+    });
+    if(next){
+      progressLine.textContent = '累積收入 ' + fmt(state.bestEarned) + ' 🪙 ・再賺 ' + fmt(Math.max(0,next.req-state.bestEarned)) + ' 解鎖「' + next.name + '」';
+    } else {
+      progressLine.textContent = '累積收入 ' + fmt(state.bestEarned) + ' 🪙 ・所有作物與土地都解鎖了！';
+    }
+  }
+
+  function renderTabs(){
+    tabbar.innerHTML = '';
+    LAND_ORDER.forEach(function(id){
+      var def = LAND_DEFS[id];
+      var unlocked = state.lands[id].unlocked;
+      var btn = document.createElement('button');
+      btn.className = 'tabbtn' + (activeTab===id?' active':'') + (unlocked?'':' locked');
+      btn.innerHTML = def.icon+' '+def.name + (unlocked?'':' <span class="lockic">🔒</span>');
+      btn.addEventListener('click', function(){ activeTab = id; renderAll(); });
+      tabbar.appendChild(btn);
+    });
+    var mbtn = document.createElement('button');
+    mbtn.className = 'tabbtn' + (activeTab==='market'?' active':'');
+    mbtn.innerHTML = '🏪 市場';
+    mbtn.addEventListener('click', function(){ activeTab = 'market'; renderAll(); });
+    tabbar.appendChild(mbtn);
+  }
+
+  function renderLandSection(){
+    marketSection.hidden = activeTab !== 'market';
+    if(activeTab === 'market'){
+      landSection.innerHTML = '';
+      renderMarket();
+      return;
+    }
+    var landId = activeTab;
+    var def = LAND_DEFS[landId];
+    var landState = state.lands[landId];
+
+    landSection.innerHTML = '';
+    var sec = document.createElement('section');
+    sec.style.setProperty('--accent', 'var(' + def.accent + ')');
+
+    if(!landState.unlocked){
+      var canAfford = state.coins >= def.unlockCost;
+      var meetsReq = state.bestEarned >= def.requireBest;
+      var panel = document.createElement('div');
+      panel.className = 'lock-panel';
+      panel.innerHTML =
+        '<div class="big">'+def.icon+'</div>'+
+        '<h2 style="justify-content:center">開墾'+def.name+'</h2>'+
+        '<p>需要累積收入達 '+fmt(def.requireBest)+' 🪙'+(meetsReq?' ✅':'（目前 '+fmt(state.bestEarned)+'）')+'<br>開墾費用 🪙 '+fmt(def.unlockCost)+'</p>'+
+        '<button class="buy-btn" id="unlockLandBtn" '+((canAfford&&meetsReq)?'':'disabled')+'>開墾 '+def.name+'</button>';
+      sec.appendChild(panel);
+      landSection.appendChild(sec);
+      var ub = document.getElementById('unlockLandBtn');
+      if(ub) ub.addEventListener('click', function(){ unlockLand(landId); });
+      return;
+    }
+
+    var h2 = document.createElement('h2');
+    h2.innerHTML = def.icon + ' ' + def.name;
+    sec.appendChild(h2);
+
+    var shopRow = document.createElement('div');
+    shopRow.className = 'shop-row';
+    cropsOfLand(landId).forEach(function(crop){
+      var unlocked = cropUnlocked(crop);
+      var card = document.createElement('div');
+      card.className = 'seed-card' + (selectedSeed[landId]===crop.id?' selected':'') + (unlocked?'':' locked');
+      card.innerHTML =
+        '<div class="emoji">'+crop.grown+'</div>'+
+        '<div class="name">'+crop.name+'</div>'+
+        '<div class="meta">⏱ '+crop.time+'s</div>'+
+        '<div class="cost">'+(unlocked ? ('🪙 '+crop.cost) : ('🔒 '+fmt(crop.unlock)))+'</div>';
+      if(unlocked){
+        card.addEventListener('click', function(){ selectedSeed[landId] = crop.id; renderAll(); });
+      }
+      shopRow.appendChild(card);
+    });
+    sec.appendChild(shopRow);
+
+    var grid = document.createElement('div');
+    grid.className = 'farm-grid';
+    landState.plots.forEach(function(plot, index){
+      var cell = document.createElement('div');
+      cell.className = 'plot' + (landId!=='veg' ? ' land-'+landId : '');
+      if(!plot){
+        cell.innerHTML = '<span class="empty-hint">＋</span>';
+        cell.addEventListener('click', function(){ plantAt(landId, index); });
+      } else {
+        var crop = cropById(plot.crop);
+        var elapsed = (Date.now() - plot.plantedAt)/1000;
+        var effTime = plot.fertilized ? crop.time * 0.65 : crop.time;
+        var frac = Math.min(1, elapsed / effTime);
+        var ready = frac >= 1;
+        cell.classList.add('tilled');
+        if(ready) cell.classList.add('ready');
+        var displayEmoji = ready ? crop.grown : (frac < SPROUT_STAGE ? '🌱' : '🌿');
+        cell.innerHTML =
+          (plot.fertilized ? '<span class="fert-badge">🧪</span>' : '') +
+          '<span class="emoji">'+displayEmoji+'</span>'+
+          (ready ? '' : '<div class="ring"><i style="width:'+Math.round(frac*100)+'%"></i></div>');
+        cell.addEventListener('click', function(){ harvestAt(landId, index); });
+      }
+      grid.appendChild(cell);
+    });
+    sec.appendChild(grid);
+
+    if(landState.size < def.maxSize){
+      var cost = Math.round(def.expandBase * (landState.size - def.startSize + 1));
+      var btn = document.createElement('button');
+      btn.className = 'expand-btn';
+      btn.textContent = '🧑‍🌾 開墾新土地 +1 格（🪙 '+fmt(cost)+'）';
+      btn.disabled = state.coins < cost;
+      btn.addEventListener('click', function(){ expandLand(landId, cost); });
+      sec.appendChild(btn);
+    } else {
+      var full = document.createElement('div');
+      full.style.cssText = 'text-align:center;color:var(--ink-soft);font-size:12px;margin-top:10px;';
+      full.textContent = '這片土地已經開墾到最大面積囉';
+      sec.appendChild(full);
+    }
+
+    landSection.appendChild(sec);
+  }
+
+  function renderMarket(){
+    var anyRow = false;
+    marketList.innerHTML = '';
+    CROPS.forEach(function(crop){
+      var qty = state.inventory[crop.id] || 0;
+      if(!cropUnlocked(crop) && qty <= 0) return;
+      anyRow = true;
+      var price = priceOf(crop);
+      var mult = marketMultFor(crop.id);
+      var dir = mult > 1.03 ? 'up' : (mult < 0.97 ? 'down' : '');
+      var arrow = dir==='up' ? '▲' : (dir==='down' ? '▼' : '·');
+
+      var row = document.createElement('div');
+      row.className = 'market-row';
+      row.innerHTML =
+        '<div class="emoji">'+crop.grown+'</div>'+
+        '<div class="info"><div class="nm">'+crop.name+'</div><div class="qty">庫存 '+qty+' 份</div></div>'+
+        '<div class="price '+dir+'">'+arrow+' 🪙'+fmt(price)+'</div>'+
+        '<div class="sellbtns">'+
+          '<button class="sellbtn" data-act="1">賣1</button>'+
+          '<button class="sellbtn" data-act="all">全賣</button>'+
+        '</div>';
+      var btns = row.querySelectorAll('.sellbtn');
+      btns[0].disabled = qty < 1;
+      btns[1].disabled = qty < 1;
+      btns[0].addEventListener('click', function(){ sellCrop(crop.id, 1); });
+      btns[1].addEventListener('click', function(){ sellCrop(crop.id, qty); });
+      marketList.appendChild(row);
+    });
+    if(!anyRow){
+      marketList.innerHTML = '<div class="market-empty">還沒有可以交易的作物，先去田裡種點東西吧 🌱</div>';
+    }
+  }
+
+  function renderAll(){
+    renderTop();
+    renderTabs();
+    renderLandSection();
+  }
+
+  // ---------- actions ----------
+
+  function plantAt(landId, index){
+    var cropId = selectedSeed[landId];
+    var crop = cropById(cropId);
+    var fert = state.fertilizerOn;
+    var fertCost = fert ? Math.max(2, Math.round(crop.cost * 0.4)) : 0;
+    var totalCost = crop.cost + fertCost;
+    if(state.coins < totalCost){
+      showToast('金幣不夠（需要 🪙'+fmt(totalCost)+'）');
+      return;
+    }
+    state.coins -= totalCost;
+    state.lands[landId].plots[index] = { crop: cropId, plantedAt: Date.now(), fertilized: fert };
+    saveState();
+    showToast((fert?'🧪 施肥種下了':'種下了') + crop.name);
+    renderAll();
+  }
+
+  function harvestAt(landId, index){
+    var plot = state.lands[landId].plots[index];
+    if(!plot) return;
+    var crop = cropById(plot.crop);
+    var elapsed = (Date.now() - plot.plantedAt)/1000;
+    var effTime = plot.fertilized ? crop.time * 0.65 : crop.time;
+    if(elapsed < effTime) return;
+    state.inventory[crop.id] = (state.inventory[crop.id]||0) + 1;
+    state.harvested += 1;
+    state.lands[landId].plots[index] = null;
+    saveState();
+    showToast('收成了 '+crop.grown+crop.name+'，已放進倉庫');
+    renderAll();
+  }
+
+  function sellCrop(cropId, qty){
+    var crop = cropById(cropId);
+    var have = state.inventory[cropId] || 0;
+    qty = Math.min(qty, have);
+    if(qty <= 0) return;
+    var price = priceOf(crop);
+    var total = price * qty;
+    state.inventory[cropId] = have - qty;
+    state.coins += total;
+    state.bestEarned += total;
+    saveState();
+    showToast('賣出 '+qty+' 份'+crop.name+' +🪙'+fmt(total));
+    renderAll();
+  }
+
+  function unlockLand(landId){
+    var def = LAND_DEFS[landId];
+    if(state.coins < def.unlockCost || state.bestEarned < def.requireBest) return;
+    state.coins -= def.unlockCost;
+    state.lands[landId].unlocked = true;
+    state.lands[landId].size = def.startSize;
+    state.lands[landId].plots = new Array(def.startSize).fill(null);
+    saveState();
+    showToast('開墾了新的'+def.name+'！');
+    renderAll();
+  }
+
+  function expandLand(landId, cost){
+    var def = LAND_DEFS[landId];
+    var landState = state.lands[landId];
+    if(state.coins < cost || landState.size >= def.maxSize) return;
+    state.coins -= cost;
+    landState.size += 1;
+    landState.plots.push(null);
+    saveState();
+    showToast(def.name+' 多了一塊地！');
+    renderAll();
+  }
+
+  fertPill.addEventListener('click', function(){
+    state.fertilizerOn = !state.fertilizerOn;
+    saveState();
+    renderTop();
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', function(){
+    state = freshState();
+    activeTab = 'veg';
+    saveState();
+    showToast('已開始新的農場');
+    renderAll();
+  });
+
+  // market drift
+  setInterval(function(){
+    CROPS.forEach(function(c){
+      var m = marketMultFor(c.id);
+      m += (Math.random()-0.5) * 0.22;
+      m = Math.max(0.7, Math.min(1.45, m));
+      state.market[c.id] = m;
+    });
+    if(activeTab === 'market') renderMarket();
+  }, 12000);
+
+  // growth tick
+  setInterval(function(){
+    if(activeTab !== 'market') renderLandSection();
+  }, 250);
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
